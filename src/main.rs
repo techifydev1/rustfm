@@ -21,22 +21,29 @@ fn main() {
     list_dir(path);
 }
 
-
 /// Lists files in a directory
 fn list_dir(path_string: &str) {
     let path = Path::new(path_string);
     if !path.is_dir() {
-        println!("The path you entered is not a directory: {}", path_string);
+        eprintln!("The path you entered is not a directory: {}", path_string);
+        return;
     }
-    if let Ok(entries) = fs::read_dir(path) {
-        for entry_result in entries {
-            match entry_result {
-                Ok(entry) => {
-                    println!("{:?}", entry.path());
-                }
-                Err(e) => {
-                    eprintln!("Failed to read an entry: {}", e);
-                }
+
+    let entries = match fs::read_dir(path) {
+        Ok(entries) => entries,
+        Err(e) => {
+            eprintln!("Failed to read directory: {}", e);
+            return;
+        }
+    };
+
+    for entry_result in entries {
+        match entry_result {
+            Ok(entry) => {
+                println!("{:?}", entry.path());
+            }
+            Err(e) => {
+                eprintln!("Failed to read an entry: {}", e);
             }
         }
     }

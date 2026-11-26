@@ -47,16 +47,14 @@ fn list_dir(path_string: &str) {
                     Ok(file_t) => file_t,
                     Err(e) => {
                         eprintln!("Failed to get file type: {}", e);
-                        return;
+                        continue;
                     }
                 };
 
                 if file_type.is_dir() {
-                    let labeled_path = format!("[DIR] {}", entry.file_name().to_string_lossy());
-                    directories.push(labeled_path);
+                    directories.push(entry.file_name().to_string_lossy().into_owned());
                 } else if file_type.is_file() {
-                    let labeled_path = format!("[FILE] {}", entry.file_name().to_string_lossy());
-                    files.push(labeled_path);
+                    files.push(entry.file_name().to_string_lossy().into_owned());
                 }
                 // println!("{:?}", entry.file_name().to_string_lossy());
             }
@@ -67,12 +65,15 @@ fn list_dir(path_string: &str) {
     }
 
     println!("---Directoryies---");
-    for dir in directories {
-        println!("{dir}");
+    for dir in &directories {
+        println!("[DIR] {dir}");
     }
 
     println!("---Files---");
-    for file in files {
-        println!("{file}")
+    for file in &files {
+        println!("[FILE] {file}")
     }
+
+    println!("Total directories: {}", directories.len());
+    println!("Total files: {}", files.len());
 }

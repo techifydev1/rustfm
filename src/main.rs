@@ -18,12 +18,17 @@ struct Cli {
     all: bool,
 
     /// Lists only files
-    #[arg(long)]
+    #[arg(long, conflicts_with = "only_dirs")]
     only_files: bool,
 
     /// Lists only dirs
-    #[arg(long)]
+    #[arg(long, conflicts_with = "only_files")]
     only_dirs: bool,
+}
+struct TypedEntry {
+    name: String,
+    file_type: String,
+    size: u64,
 }
 
 fn main() {
@@ -52,11 +57,6 @@ fn list_dir(path_string: &str, cli: &Cli) {
         }
     };
 
-    struct TypedEntry {
-        name: String,
-        file_type: String,
-        size: u64,
-    }
 
     let mut directories: Vec<TypedEntry> = Vec::new();
     let mut files: Vec<TypedEntry> = Vec::new();

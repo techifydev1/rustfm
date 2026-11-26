@@ -3,14 +3,32 @@ use std::{
     path::Path,
 };
 
-use clap::Parser;
+use clap::{Parser, Subcommand, Args};
 
 #[derive(Parser)]
 #[command(name = "Rustfm")]
 #[command(about = "A simple command line file manager")]
 #[command(version = "0.1")]
 struct Cli {
-    /// Directory to explore defalts to default directory
+
+    #[command(subcommand)]
+    command: Commands,
+}
+struct TypedEntry {
+    name: String,
+    file_type: String,
+    size: u64,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// List files and directories
+    List(ListArgs),
+}
+
+#[derive(Args, Default)]
+struct ListArgs {
+    /// Path to list
     path: Option<String>,
 
     /// List all files including hidden files
@@ -25,24 +43,23 @@ struct Cli {
     #[arg(long, conflicts_with = "only_files")]
     only_dirs: bool,
 }
-struct TypedEntry {
-    name: String,
-    file_type: String,
-    size: u64,
-}
 
 fn main() {
     let cli = Cli::parse();
 
-    let path = cli.path.as_deref().unwrap_or(".");
+    match cli.command {
+        Commands::List(args) => {
+            let path = args.path.as_deref().unwrap_or(".");
 
-    println!("Exloring directory: {}", path);
+            println!("Exploring directory: {}", path);
 
-    list_dir(path, &cli);
+            list_dir(path, &args);
+        }
+    }
 }
 
 /// Lists files in a directory
-fn list_dir(path_string: &str, cli: &Cli) {
+fn list_dir(path_string: &str, cli: &ListArgs) {
     let path = Path::new(path_string);
     if !path.is_dir() {
         eprintln!("The path you entered is not a directory: {}", path_string);
@@ -56,7 +73,6 @@ fn list_dir(path_string: &str, cli: &Cli) {
             return;
         }
     };
-
 
     let mut directories: Vec<TypedEntry> = Vec::new();
     let mut files: Vec<TypedEntry> = Vec::new();

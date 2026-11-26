@@ -1,4 +1,7 @@
-use std::{fs, path::Path};
+use std::{
+    fs::{self},
+    path::Path,
+};
 
 use clap::Parser;
 
@@ -37,8 +40,14 @@ fn list_dir(path_string: &str) {
         }
     };
 
-    let mut directories: Vec<String> = Vec::new();
-    let mut files: Vec<String> = Vec::new();
+    struct TypedEntry {
+        name: String,
+        file_type: String,
+        size: u64,
+    }
+
+    let mut directories: Vec<TypedEntry> = Vec::new();
+    let mut files: Vec<TypedEntry> = Vec::new();
 
     for entry_result in entries {
         match entry_result {
@@ -51,10 +60,34 @@ fn list_dir(path_string: &str) {
                     }
                 };
 
+                let extension = entry
+                    .path()
+                    .extension()
+                    .and_then(|os_str| os_str.to_str())
+                    .unwrap_or("none")
+                    .to_owned();
+                let metadata = match entry.metadata() {
+                    Ok(data) => data,
+                    Err(e) => {
+                        eprintln!("Failed to get file's metadata: {}", e);
+                        continue;
+                    }
+                };
+
                 if file_type.is_dir() {
-                    directories.push(entry.file_name().to_string_lossy().into_owned());
+                    let file = TypedEntry {
+                        name: entry.file_name().to_string_lossy().into_owned(),
+                        file_type: extension,
+                        size: metadata.len(),
+                    };
+                    directories.push(file);
                 } else if file_type.is_file() {
-                    files.push(entry.file_name().to_string_lossy().into_owned());
+                    let file = TypedEntry {
+                        name: entry.file_name().to_string_lossy().into_owned(),
+                        file_type: extension,
+                        size: metadata.len(),
+                    };
+                    files.push(file);
                 }
                 // println!("{:?}", entry.file_name().to_string_lossy());
             }
@@ -66,14 +99,21 @@ fn list_dir(path_string: &str) {
 
     println!("---Directoryies---");
     for dir in &directories {
-        println!("[DIR] {dir}");
+        println!("[DIR] {}", dir.name);
+        println!("Size: {}", dir.size);
+        println!("Type: {}", dir.file_type)
     }
+    println!("Total directories: {}", directories.len());
 
+    let mut total_size = 0;
     println!("---Files---");
     for file in &files {
-        println!("[FILE] {file}")
+        println!("[FILE] {}", file.name);
+        println!("Size: {}", file.size);
+        println!("Type: {}", file.file_type);
+        total_size += file.size;
     }
 
-    println!("Total directories: {}", directories.len());
     println!("Total files: {}", files.len());
+    println!("Total file size: {}", total_size);
 }
